@@ -30,7 +30,7 @@
     # Create histogram with 15 bins
     qplot(stepsPerDay$stepsPerDay, bins = 15)
 
-![](PA1_template_files/figure-markdown_strict/steps_per_day_hist-1.png)
+![](steps_per_day_hist-1.png)
 
 #### 3. Mean Steps per day
 
@@ -56,7 +56,7 @@ We note that the mean steps per day is 9354.23, and the median steps is
     # Plot time series with ggplot 2, using the dailyActivity data
     qplot(interval, meanSteps, data = dailyActivity, geom ='line' )
 
-![](PA1_template_files/figure-markdown_strict/daily_activity_plot-1.png)
+![](daily_activity_plot-1.png)
 
 #### 5. 5-minute Interval with maximum steps
 
@@ -102,7 +102,7 @@ We see that the imputation process has removed all missing values.
     # Make histogram with 15 bins as in orginal plot
     qplot(imputedStepPerDay$steps_per_day, bins = 15)
 
-![](PA1_template_files/figure-markdown_strict/histogram_imputed-1.png)
+![](histogram_imputed-1.png)
 
 We see that the number of days with 0 steps has decreased drastically
 
@@ -151,4 +151,4 @@ another with 10766.19 steps
     # Print object
     gg
 
-![](PA1_template_files/figure-markdown_strict/weekend_vs_weekday_plot-1.png)
+![](weekend_vs_weekday_plot-1.png)
