@@ -1,25 +1,163 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research: Project 1"
+author: "Duncan Munslow"
+output: html_document
 ---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+  
+#### Libraries Used
+```{r libraries, message=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+#### 1. Code for reading in dataset/processing data
+```{r read_process, cache = TRUE}
+
+# Save file URL
+fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+
+# Download and extract data into working directory if it does not already exist
+if(!file.exists("proj1.zip")){
+download.file(fileURL, "./proj1.zip")
+unzip("./proj1.zip", exdir = "./proj1data")
+}
+
+# Read data into R
+activityData <- read.csv("./proj1data/activity.csv", header =T)
+
+# Convert date variable to correct format
+activityData$date <- as.Date(as.character(activityData$date, "%Y-%m-%d"))
+```
 
 
-## Loading and preprocessing the data
+#### 2. Histogram of the total number of steps taken each day
+```{r steps_per_day_hist}
+
+# Group data by date(day), and then calculate steps per day - ignoring missing values.  
+# Store results in stepsPerDay data frame
+activDataGroup <- group_by(activityData, date)
+stepsPerDay <- summarize(activDataGroup, stepsPerDay = sum(steps, na.rm = T))
+                            
+# Create histogram with 15 bins
+qplot(stepsPerDay$stepsPerDay, bins = 15)
+
+```
+
+#### 3. Mean Steps per day
+```{r mean_median_steps}
+
+mean(stepsPerDay$stepsPerDay)
+median(stepsPerDay$stepsPerDay)
+
+```
+
+We note that the mean steps per day is 9354.23, and the median steps is 10395. 
+
+#### 4. Time Series plot of average number of steps taken
+```{r daily_activity_plot}
+
+# Group the data by interval
+byInterval <- group_by(activityData, interval)
+
+# Calculate the average steps per interval - ignoring missing values
+dailyActivity <- summarize(byInterval, meanSteps = mean(steps, na.rm = T))
+
+# Plot time series with ggplot 2, using the dailyActivity data
+qplot(interval, meanSteps, data = dailyActivity, geom ='line' )
+
+```
+
+#### 5. 5-minute Interval with maximum steps
+```{r max_steps}
+dailyActivity[which(dailyActivity$meanSteps == max(dailyActivity$meanSteps)),]
+```
+We note that the interval with the maximum (on average) steps is 835, with 206.2 steps 
+
+#### 6. Code to describe and show a strategy for imputing missing values
+```{r count_missing_values}
+
+sum(is.na(activityData$steps))
+
+```
+
+We note that there are 2304 missing values in the data set.  My strategy to impute
+missing values is to replace "NA" values with the average steps for that interval
+```{r impute_missing_values}
+
+# create new data set with imputed values to preserve original data set
+activeDataImputed <- activityData
+
+# Replace missing values with interval average for that period using matrix operations
+activeDataImputed$steps[is.na(activeDataImputed$steps)] <- 
+    dailyActivity$meanSteps[match(activeDataImputed$interval,dailyActivity$interval)]
+
+sum(is.na(activeDataImputed$steps))
+
+```
+
+We see that the imputation process has removed all missing values.
+
+#### 7. Histogram of steps per day with imputed values
+```{r histogram_imputed}
+
+imputedGrouped <- group_by(activeDataImputed, date)
+
+imputedStepPerDay <- summarize(imputedGrouped, steps_per_day = sum(steps))
+
+# Make histogram with 15 bins as in orginal plot
+qplot(imputedStepPerDay$steps_per_day, bins = 15)
+```
+
+We see that the number of days with 0 steps has decreased drastically  
+
+##### Mean and Median imputed steps
+```{r mean_median_steps_imputed}
+mean(imputedStepPerDay$steps_per_day)
+median(imputedStepPerDay$steps_per_day)
+
+```
+Interestingly, the mean and median steps values are exactly equal to one another with 10766.19 steps  
 
 
+#### 8. Panel plot - Average # of steps Weekday vs. Weekend
+```{r weekday_coding}
 
-## What is mean total number of steps taken per day?
+# Create new data frame with imputed data to preserve orginal data
+patternData <- activeDataImputed
 
+# create new variable "daynames" using weekdays function, which assigns the day to each interval
+patternData$daynames <- weekdays(patternData$date)
 
+# Create charactor vector with weekend names 
+weekends <- c("Saturday", "Sunday")
 
-## What is the average daily activity pattern?
+# Create indicator for weekend and weekday variable types
+patternData <- mutate(patternData, 
+                      dayType = ifelse(daynames %in% weekends, 
+                                       "weekend", "weekday" ))
 
+# Group the data by dayType and interval, and calculate the average steps by 
+# day type and interval
+patternGrouped <- group_by(patternData, dayType, interval)
+patternSummarized <- summarize(patternGrouped, meanSteps = mean(steps))
 
+```
 
-## Imputing missing values
+#### Plot 
+```{r weekend_vs_weekday_plot}
 
+# create ggplot object using the summarized data
+gg <- ggplot(data = patternSummarized, aes(x = interval, y = meanSteps, color = dayType))
 
+# add facets for weekend and weeday and the lines for each to the gg object
+gg <- gg + facet_grid(dayType~.) + geom_line()
 
-## Are there differences in activity patterns between weekdays and weekends?
+# Print object
+gg
+
+```
