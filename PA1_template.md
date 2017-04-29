@@ -30,7 +30,7 @@
     # Create histogram with 15 bins
     qplot(stepsPerDay$stepsPerDay, bins = 15)
 
-![](PA1_template_files/figure-markdown_strict/steps_per_day_hist-1.png)
+![](steps_per_day_hist-1.png)
 
 #### 3. Mean Steps per day
 
